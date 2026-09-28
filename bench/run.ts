@@ -3,6 +3,9 @@
  *
  *   TYPESAFE_API_KEY=… bun run bench/run.ts
  *
+ *   # Or use OpenJEV (free community gateway to the same Jev model):
+ *   OPENJEV_API_KEY=… JEV_PROVIDER=openjev bun run bench/run.ts
+ *
  * Every system indexes the same corpus (lib/jev-search-index.json) and
  * answers the same labelled queries (bench/queries.json). We report
  * Hit@1, Hit@3, MRR@10 and per-query latency. Results land in

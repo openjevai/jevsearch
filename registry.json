@@ -9,26 +9,63 @@
       "title": "jev-search",
       "description": "Command-palette site search. Keyword hits on the first keystroke, re-ranked by TypeSafe's Jev model a few hundred milliseconds later. Ships the component, the hook, the lexical index, the server handler and an API route.",
       "author": "Kyle McLaren",
-      "dependencies": ["lucide-react"],
-      "registryDependencies": ["utils", "kbd"],
-      "envVars": { "TYPESAFE_API_KEY": "" },
-      "files": [
-        { "path": "src/components/jev-search.tsx", "type": "registry:component" },
-        { "path": "src/hooks/use-jev-search.ts", "type": "registry:hook" },
-        { "path": "src/lib/jev-search-core.ts", "type": "registry:lib" },
-        { "path": "src/lib/jev-search-server.ts", "type": "registry:lib" },
-        { "path": "registry/next/route.ts", "type": "registry:page", "target": "app/api/jev-search/route.ts" },
-        { "path": "registry/lib/jev-search-index.json", "type": "registry:lib" }
+      "dependencies": [
+        "lucide-react"
       ],
-      "docs": "Set TYPESAFE_API_KEY, replace lib/jev-search-index.json with your own documents (or run the jev-search-indexer), then render <JevSearch /> anywhere.",
-      "categories": ["search", "command", "navigation"]
+      "registryDependencies": [
+        "utils",
+        "kbd"
+      ],
+      "envVars": {
+        "TYPESAFE_API_KEY": "",
+        "OPENJEV_API_KEY": ""
+      },
+      "files": [
+        {
+          "path": "src/components/jev-search.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/hooks/use-jev-search.ts",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/lib/jev-search-core.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "src/lib/jev-search-server.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/next/route.ts",
+          "type": "registry:page",
+          "target": "app/api/jev-search/route.ts"
+        },
+        {
+          "path": "registry/lib/jev-search-index.json",
+          "type": "registry:lib"
+        }
+      ],
+      "docs": "Set TYPESAFE_API_KEY (or OPENJEV_API_KEY with JEV_PROVIDER=openjev), replace lib/jev-search-index.json with your own documents (or run the jev-search-indexer), then render <JevSearch />.",
+      "categories": [
+        "search",
+        "command",
+        "navigation"
+      ]
     },
     {
       "name": "jev-search-indexer",
       "type": "registry:block",
       "title": "jev-search indexer",
       "description": "Builds lib/jev-search-index.json from a folder of Markdown or MDX, one document per page and one per h2 heading.",
-      "files": [{ "path": "scripts/jev-search-index.ts", "type": "registry:file", "target": "scripts/jev-search-index.ts" }],
+      "files": [
+        {
+          "path": "scripts/jev-search-index.ts",
+          "type": "registry:file",
+          "target": "scripts/jev-search-index.ts"
+        }
+      ],
       "docs": "Run: bunx tsx scripts/jev-search-index.ts content/docs /docs lib/jev-search-index.json"
     }
   ]

@@ -2,6 +2,8 @@
 
 Site search that understands the question. A [shadcn/ui](https://ui.shadcn.com) registry block: a command palette that shows keyword hits on the first keystroke and, a couple of hundred milliseconds later, re-ranks them with [TypeSafe](https://typesafe.ai)'s Jev model by what the visitor actually meant.
 
+> **OpenJEV support:** Jev is built by [TypeSafe](https://typesafe.ai). This fork keeps TypeSafe as the default and adds optional support for [OpenJEV](https://openjev.sh), a free community gateway to the same Jev model — set `OPENJEV_API_KEY` (or `JEV_PROVIDER=openjev`) to use it. Original project: https://github.com/kylemclaren/jevsearch by @kylemclaren.
+
 - **Drop-in.** One `shadcn add` against the registry JSON in this repo lands the component, hook, lexical index, server handler and an API route in your project. No package to wrap; the files are yours.
 - **Fast first, smart second.** The keyword pass answers in single-digit milliseconds and streams straight to the UI. Jev's ranking arrives behind it and the rows glide into their new order.
 - **Ranked by intent, not overlap.** Jev reads the query and the top candidates and returns a calibrated relevance for each one in a single request. No embeddings, no vector database, no re-indexing job.
@@ -29,7 +31,12 @@ bunx --bun shadcn@latest add https://raw.githubusercontent.com/kylemclaren/jevse
 Then set your key:
 
 ```bash
+# TypeSafe (default) — get one at https://typesafe.ai
 echo 'TYPESAFE_API_KEY=tsk_…' >> .env.local
+
+# Or OpenJEV (free community gateway) — get one at https://openjev.sh/dashboard
+echo 'OPENJEV_API_KEY=ojev_…' >> .env.local
+# Set JEV_PROVIDER=openjev to force OpenJEV even when both keys are present
 ```
 
 Then build an index. Hand the route any `SearchDocument[]`, or add the indexer and point it at a folder of Markdown/MDX:
@@ -82,8 +89,9 @@ Add `stream=0` for a single JSON body. The server object also exposes `search(qu
 | `cacheSize` | `1000` | Queries kept in memory |
 | `timeoutMs` | `4000` | Fall back to keyword order after this |
 | `relevanceWeight` | `0.75` | Blend between per-page relevance and best-answer share |
-| `model` | `jev-latest` | Or `jev-preview`, or a pinned version |
-| `apiKey`, `apiUrl` | env | `TYPESAFE_API_KEY`, `TYPESAFE_API_URL` |
+| `model` | `jev-latest` | Or `openjev` (when using OpenJEV), `jev-preview`, or a pinned version |
+| `provider` | auto | `"typesafe"` or `"openjev"`. Auto-detects: TypeSafe if `TYPESAFE_API_KEY` is set, else OpenJEV. Override with `JEV_PROVIDER` env. |
+| `apiKey`, `apiUrl` | env | `TYPESAFE_API_KEY` / `TYPESAFE_API_URL` (or `OPENJEV_API_KEY` / `OPENJEV_API_URL` when using OpenJEV) |
 
 ## Benchmarks
 

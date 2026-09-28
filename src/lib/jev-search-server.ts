@@ -13,11 +13,13 @@ import { buildIndex, lexicalSearch, type LexicalIndex, type SearchDocument, type
 
 export interface JevSearchOptions {
   documents: SearchDocument[]
-  /** Defaults to process.env.TYPESAFE_API_KEY. */
+  /** Provider: "typesafe" (default) or "openjev". Defaults to JEV_PROVIDER env, then auto-detect from which key is set. */
+  provider?: "typesafe" | "openjev"
+  /** API key. Defaults to TYPESAFE_API_KEY (or OPENJEV_API_KEY when provider is "openjev"). */
   apiKey?: string
-  /** Defaults to process.env.TYPESAFE_API_URL or https://api.typesafe.ai/v1/systemone. */
+  /** API URL. Defaults to TYPESAFE_API_URL / https://api.typesafe.ai/v1/systemone (or OPENJEV_API_URL / https://api.openjev.sh/v1/systemone). */
   apiUrl?: string
-  /** Defaults to "jev-latest". */
+  /** Model id. Defaults to "jev-latest" (or "openjev" when provider is "openjev"). */
   model?: string
   /** How many lexical hits Jev judges. Accuracy plateaus around 20. Default 20. */
   candidates?: number
@@ -85,7 +87,6 @@ class LRU<V> {
 export function createJevSearch(options: JevSearchOptions) {
   const {
     documents,
-    model = "jev-latest",
     candidates: candidateCount = 20,
     threshold = 0.15,
     excerptLength = 320,
@@ -93,8 +94,21 @@ export function createJevSearch(options: JevSearchOptions) {
     timeoutMs = 4000,
     relevanceWeight = 0.75,
   } = options
-  const apiKey = options.apiKey ?? process.env.TYPESAFE_API_KEY
-  const apiUrl = options.apiUrl ?? process.env.TYPESAFE_API_URL ?? "https://api.typesafe.ai/v1/systemone"
+
+  // Provider selection: explicit choice > JEV_PROVIDER env > TypeSafe if its
+  // key is set (unchanged default) > OpenJEV if only OPENJEV_API_KEY is set.
+  const provider = options.provider
+    ?? (process.env.JEV_PROVIDER as "typesafe" | "openjev" | undefined)
+    ?? (process.env.TYPESAFE_API_KEY ? "typesafe" : "openjev")
+
+  const isOpenjev = provider === "openjev"
+  const model = options.model ?? (isOpenjev ? "openjev" : "jev-latest")
+  const apiKey = options.apiKey
+    ?? (isOpenjev ? process.env.OPENJEV_API_KEY : process.env.TYPESAFE_API_KEY)
+  const apiUrl = options.apiUrl
+    ?? (isOpenjev
+      ? (process.env.OPENJEV_API_URL ?? "https://api.openjev.sh/v1/systemone")
+      : (process.env.TYPESAFE_API_URL ?? "https://api.typesafe.ai/v1/systemone"))
 
   const index: LexicalIndex = buildIndex(documents)
   const byId = new Map(documents.map((d) => [d.id, d]))
@@ -112,7 +126,7 @@ export function createJevSearch(options: JevSearchOptions) {
     const key = `${model}\u0000${normalize(query)}`
     const cached = cache.get(key)
     if (cached) return { ...cached, cached: true }
-    if (!apiKey) throw new Error("jev-search: TYPESAFE_API_KEY is not set")
+    if (!apiKey) throw new Error(`jev-search: ${isOpenjev ? "OPENJEV_API_KEY" : "TYPESAFE_API_KEY"} is not set`)
 
     const started = performance.now()
     const cands = hits.slice(0, candidateCount)
@@ -160,7 +174,7 @@ export function createJevSearch(options: JevSearchOptions) {
     const payload = JSON.stringify({ state, model, questions })
     let body: TypeSafeResponse | undefined
     let lastError: Error | undefined
-    // 401 and 422 are our fault; anything else gets two quick retries.
+    // 401 and 422 are our fault; anything else (429, 503, 529, network) gets two quick retries.
     for (let attempt = 0; attempt < 3 && !body; attempt++) {
       if (attempt > 0) await new Promise((r) => setTimeout(r, 150 * attempt * attempt))
       const controller = new AbortController()
